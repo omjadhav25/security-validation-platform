@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { getServers, getReport } from '../api'
 import ScoreGauge from './ScoreGauge'
 import FindingsTable from './FindingsTable'
-import { Shield, Server, AlertTriangle, CheckCircle } from 'lucide-react'
+import { Shield, Server, AlertTriangle, CheckCircle, Download } from 'lucide-react'
 
 export default function Dashboard() {
   const [servers, setServers] = useState([])
@@ -54,7 +54,7 @@ export default function Dashboard() {
       </div>
 
       <div className="flex">
-        {/* Sidebar - Server List */}
+        {/* Sidebar */}
         <div className="w-64 min-h-screen bg-white border-r border-gray-200 p-4">
           <h2 className="text-xs font-semibold text-gray-500 uppercase mb-3">
             Monitored Servers
@@ -91,24 +91,33 @@ export default function Dashboard() {
           {!loading && report && (
             <>
               {/* Server Info */}
-              <div className="mb-6">
-                <h2 className="text-lg font-bold text-gray-900">
-                  {report.server.hostname}
-                </h2>
-                <p className="text-sm text-gray-500">
-                  {report.server.ip_address} · Last scanned{' '}
-                  {new Date(report.latest_scan.scanned_at).toLocaleString()}
-                </p>
+              <div className="mb-6 flex items-start justify-between">
+                <div>
+                  <h2 className="text-lg font-bold text-gray-900">
+                    {report.server.hostname}
+                  </h2>
+                  <p className="text-sm text-gray-500">
+                    {report.server.ip_address} &middot; Last scanned{' '}
+                    {new Date(report.latest_scan.scanned_at).toLocaleString()}
+                  </p>
+                </div>
+                <a
+                  href={`http://localhost:8000/api/report/${report.server.id}/pdf`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  <Download size={16} />
+                  Export PDF
+                </a>
               </div>
 
               {/* Stats Cards */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                {/* Score Gauge Card */}
                 <div className="bg-white rounded-2xl border border-gray-200 shadow-sm col-span-1">
                   <ScoreGauge score={report.latest_scan.score} />
                 </div>
 
-                {/* Critical Failures */}
                 <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 flex flex-col justify-center">
                   <div className="flex items-center gap-2 mb-2">
                     <AlertTriangle size={18} className="text-red-500" />
@@ -117,7 +126,6 @@ export default function Dashboard() {
                   <p className="text-4xl font-bold text-red-500">{criticalCount}</p>
                 </div>
 
-                {/* Passed Checks */}
                 <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 flex flex-col justify-center">
                   <div className="flex items-center gap-2 mb-2">
                     <CheckCircle size={18} className="text-green-500" />
@@ -126,7 +134,6 @@ export default function Dashboard() {
                   <p className="text-4xl font-bold text-green-500">{passedCount}</p>
                 </div>
 
-                {/* Total Checks */}
                 <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 flex flex-col justify-center">
                   <div className="flex items-center gap-2 mb-2">
                     <Shield size={18} className="text-blue-500" />

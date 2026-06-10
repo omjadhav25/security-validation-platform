@@ -1,10 +1,12 @@
+from fastapi.responses import StreamingResponse
+from pdf_generator import generate_pdf_report
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from typing import List
 
-from database import engine, get_db
-from models import Base, Server, Scan, Finding
+from database import engine, get_db, Base
+from models import Server, Scan, Finding
 import schemas
 
 Base.metadata.create_all(bind=engine)
@@ -82,3 +84,26 @@ def get_report(server_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="No scans found for this server")
 
     return {"server": server, "latest_scan": latest_scan}
+    
+@app.get("/api/report/{server_id}/pdf")
+def download_pdf_report(server_id: int, db: Session = Depends(get_db)):
+    server = db.query(Server).filter(Server.id == server_id).first()
+    if not server:
+        raise HTTPException(status_code=404, detail="Server not found")
+
+    latest_scan = db.query(Scan).filter(
+        Scan.server_id == server_id
+    ).order_by(Scan.scanned_at.desc()).first()
+
+    if not latest_scan:
+        raise HTTPException(status_code=404, detail="No scans found")
+
+    pdf_buffer = generate_pdf_report(server, latest_scan)
+
+    filename = f"security-report-{server.hostname}-{latest_scan.scanned_at.strftime('%Y%m%d')}.pdf"
+
+    return StreamingResponse(
+        pdf_buffer,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )

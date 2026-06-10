@@ -2,6 +2,7 @@ import json
 import requests
 from collector import collect_all
 from checks import run_all_checks
+from email_alerts import send_alert
 
 BACKEND_URL = "http://localhost:8000/api/scan"
 
@@ -36,3 +37,6 @@ if __name__ == "__main__":
 
     report = build_report(data, findings)
     send_report(report)
+
+    print("📧 Checking if alert needed...")
+    send_alert(report)
