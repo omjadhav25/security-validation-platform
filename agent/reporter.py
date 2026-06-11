@@ -4,7 +4,7 @@ from collector import collect_all
 from checks import run_all_checks
 from email_alerts import send_alert
 
-BACKEND_URL = "http://localhost:8000/api/scan"
+BACKEND_URL = "https://security-platform-production.up.railway.app/api/scan"
 
 def calculate_score(findings):
     total = len(findings)
