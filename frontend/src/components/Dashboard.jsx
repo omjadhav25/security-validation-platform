@@ -102,7 +102,7 @@ export default function Dashboard() {
                   </p>
                 </div>
                 <a
-                  href={`http://localhost:8000/api/report/${report.server.id}/pdf`}
+                  href={`${import.meta.env.REACT_APP_API_URL || 'http://localhost:8000'}/api/report/${report.server.id}/pdf`}
                   target="_blank"
                   rel="noreferrer"
                   className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
