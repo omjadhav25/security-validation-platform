@@ -4,7 +4,7 @@ from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from typing import List
-
+import os
 from database import engine, get_db, Base
 from models import Server, Scan, Finding
 import schemas
@@ -13,9 +13,11 @@ Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Security Validation Platform", version="1.0.0")
 
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=[FRONTEND_URL],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
