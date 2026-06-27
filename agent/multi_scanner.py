@@ -7,7 +7,7 @@ from remote_scanner import scan_remote_server
 from checks import run_all_checks
 from email_alerts import send_alert
 
-BACKEND_URL = "http://security-platform-production.up.railway.app/api/scan"
+BACKEND_URL = "https://security-platform-production.up.railway.app/api/scan"
 
 def load_targets():
     with open("targets.json") as f:

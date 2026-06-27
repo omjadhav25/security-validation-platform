@@ -5,7 +5,7 @@ from collector import collect_all
 from checks import run_all_checks
 from email_alerts import send_alert
 
-BACKEND_URL = os.getenv("BACKEND_URL", "http://security-platform-production.up.railway.app/api/scan")
+BACKEND_URL = os.getenv("BACKEND_URL", "https://security-platform-production.up.railway.app/api/scan")
 
 def calculate_score(findings):
     total = len(findings)
@@ -23,7 +23,7 @@ def build_report(data, findings):
 def send_report(report):
     try:
         response = requests.post(BACKEND_URL, json=report)
-        response.raise_for_status()
+        response.raise_for_status()c 
         print(f"✅ Report sent successfully. Score: {report['score']}%")
     except requests.exceptions.ConnectionError:
         print("⚠️  Backend not running. Printing report locally:\n")
