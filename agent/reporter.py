@@ -1,10 +1,11 @@
 import json
 import requests
+import os
 from collector import collect_all
 from checks import run_all_checks
 from email_alerts import send_alert
 
-BACKEND_URL = "https://security-platform-production.up.railway.app/api/scan"
+BACKEND_URL = os.getenv("BACKEND_URL", "http://security-platform-production.up.railway.app/api/scan")
 
 def calculate_score(findings):
     total = len(findings)
