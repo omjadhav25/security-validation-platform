@@ -13,7 +13,7 @@ Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Security Validation Platform", version="1.0.0")
 
-FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
+FRONTEND_URL = os.getenv("FRONTEND_URL", "https://security-validation-platform.vercel.app/")
 
 app.add_middleware(
     CORSMiddleware,
