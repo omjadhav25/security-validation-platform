@@ -3,6 +3,16 @@ from typing import List
 from datetime import datetime
 
 
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+
+class TokenResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+
+
 class FindingSchema(BaseModel):
     control_id: str
     title: str

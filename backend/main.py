@@ -1,15 +1,26 @@
 from fastapi.responses import StreamingResponse
+from fastapi.staticfiles import StaticFiles
 from pdf_generator import generate_pdf_report
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from typing import List
 import os
-from database import engine, get_db, Base
-from models import Server, Scan, Finding
+from database import engine, get_db, Base, SessionLocal
+from models import Server, Scan, Finding, User
 import schemas
+from auth import (
+    authenticate_user,
+    create_access_token,
+    create_admin_if_missing,
+    get_current_user,
+)
 
 Base.metadata.create_all(bind=engine)
+
+# Seed the admin account (from ADMIN_USERNAME / ADMIN_PASSWORD env vars) once on boot.
+with SessionLocal() as _db:
+    create_admin_if_missing(_db)
 
 app = FastAPI(title="Security Validation Platform", version="1.0.0")
 
@@ -23,12 +34,29 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.mount("/public", StaticFiles(directory="public"), name="public")
+
+
 @app.get("/")
 def root():
     return {"message": "Security Validation Platform API is running"}
 
+
+@app.post("/api/auth/login", response_model=schemas.TokenResponse)
+def login(payload: schemas.LoginRequest, db: Session = Depends(get_db)):
+    user = authenticate_user(db, payload.username, payload.password)
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid username or password")
+    token = create_access_token(subject=user.username)
+    return {"access_token": token}
+
+
 @app.post("/api/scan")
-def receive_scan(payload: schemas.ScanRequest, db: Session = Depends(get_db)):
+def receive_scan(
+    payload: schemas.ScanRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
     server = db.query(Server).filter(
         Server.hostname == payload.hostname
     ).first()
@@ -68,11 +96,11 @@ def receive_scan(payload: schemas.ScanRequest, db: Session = Depends(get_db)):
     }
 
 @app.get("/api/servers", response_model=List[schemas.ServerOut])
-def get_servers(db: Session = Depends(get_db)):
+def get_servers(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     return db.query(Server).all()
 
 @app.get("/api/report/{server_id}", response_model=schemas.ReportOut)
-def get_report(server_id: int, db: Session = Depends(get_db)):
+def get_report(server_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     server = db.query(Server).filter(Server.id == server_id).first()
 
     if not server:
@@ -88,7 +116,7 @@ def get_report(server_id: int, db: Session = Depends(get_db)):
     return {"server": server, "latest_scan": latest_scan}
     
 @app.get("/api/report/{server_id}/pdf")
-def download_pdf_report(server_id: int, db: Session = Depends(get_db)):
+def download_pdf_report(server_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     server = db.query(Server).filter(Server.id == server_id).first()
     if not server:
         raise HTTPException(status_code=404, detail="Server not found")
