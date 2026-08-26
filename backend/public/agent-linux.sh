@@ -1,51 +1,25 @@
 #!/usr/bin/env bash
-# Security Validation Platform - Linux one-liner agent
+# Security Validation Platform - Linux agent
+# Copy this exact command from your dashboard and run it:
+#   curl -fsSL https://<your-app>.onrender.com/public/agent-linux.sh | bash -s -- YOUR_API_KEY
 #
-# Run it with:
-#   curl -fsSL https://<your-backend>.onrender.com/public/agent-linux.sh | bash
-#
-# It will:
-#   1. Ask for your platform username/password (same login as the dashboard)
-#   2. Log in to the backend to get a token - the scan is REFUSED without a valid login
-#   3. Collect SSH/firewall/password-policy facts from this machine
-#   4. Print the results on screen
-#   5. Submit them to the backend so they show up on the website
-#
-# Nothing is installed - it only needs bash, python3 and curl, which almost
-# every Linux box already has.
+# It scans this machine and reports the results to your dashboard.
+# Nothing gets installed - it only needs bash, python3 and curl.
 
 set -euo pipefail
 
 BACKEND_URL="${BACKEND_URL:-https://security-validation-platform.onrender.com}"
+API_KEY="${1:-${SVP_API_KEY:-}}"
 
-echo "Security Validation Platform - agent scan"
-echo "Backend: ${BACKEND_URL}"
-echo
-
-# --- 1. Login -----------------------------------------------------------
-read -rp "Platform username: " SVP_USERNAME
-read -rsp "Platform password: " SVP_PASSWORD
-echo
-echo
-
-LOGIN_RESPONSE=$(curl -fsS -X POST "${BACKEND_URL}/api/auth/login" \
-  -H "Content-Type: application/json" \
-  -d "{\"username\":\"${SVP_USERNAME}\",\"password\":\"${SVP_PASSWORD}\"}") || {
-    echo "Login failed. Check your username/password and try again."
-    exit 1
-  }
-
-TOKEN=$(echo "$LOGIN_RESPONSE" | python3 -c "import sys,json; print(json.load(sys.stdin)['access_token'])")
-
-if [ -z "$TOKEN" ]; then
-  echo "Login did not return a token. Aborting - no scan will run."
+if [ -z "$API_KEY" ]; then
+  echo "Missing API key."
+  echo "Copy the exact install command from your dashboard - it already includes your key."
   exit 1
 fi
 
-echo "Login OK. Running local security checks..."
+echo "Security Validation Platform - scanning this machine..."
 echo
 
-# --- 2. Collect facts + run checks + print + build report --------------
 REPORT_JSON=$(python3 - <<'PYEOF'
 import json, socket, subprocess
 
@@ -132,6 +106,7 @@ score = round((passed / total) * 100, 1) if total else 0
 report = {
     "hostname": socket.gethostname(),
     "ip_address": socket.gethostbyname(socket.gethostname()),
+    "os_type": "linux",
     "score": score,
     "findings": findings,
 }
@@ -143,7 +118,6 @@ for f in findings:
 print(f"Score: {score}%")
 print("--------------------")
 
-import sys
 json.dump(report, open("/tmp/svp_report.json", "w"))
 PYEOF
 )
@@ -151,14 +125,18 @@ PYEOF
 REPORT_JSON=$(cat /tmp/svp_report.json)
 rm -f /tmp/svp_report.json
 
-# --- 3. Submit to backend -------------------------------------------------
 echo
-echo "Submitting results to ${BACKEND_URL} ..."
+echo "Sending results to your dashboard..."
 
-curl -fsS -X POST "${BACKEND_URL}/api/scan" \
+HTTP_CODE=$(curl -s -o /tmp/svp_resp.json -w "%{http_code}" -X POST "${BACKEND_URL}/api/scan" \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer ${TOKEN}" \
-  -d "${REPORT_JSON}" | python3 -m json.tool
+  -H "X-API-Key: ${API_KEY}" \
+  -d "${REPORT_JSON}")
 
-echo
-echo "Done. View the result on the dashboard."
+if [ "$HTTP_CODE" = "200" ]; then
+  echo "Done! Check your dashboard for the full report."
+else
+  echo "Something went wrong (HTTP $HTTP_CODE):"
+  cat /tmp/svp_resp.json
+fi
+rm -f /tmp/svp_resp.json

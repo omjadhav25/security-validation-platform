@@ -1,6 +1,12 @@
 from pydantic import BaseModel
-from typing import List
+from typing import List, Optional
 from datetime import datetime
+
+
+# --- Auth -------------------------------------------------------------
+class RegisterRequest(BaseModel):
+    username: str
+    password: str
 
 
 class LoginRequest(BaseModel):
@@ -11,8 +17,17 @@ class LoginRequest(BaseModel):
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
+    api_key: str
 
 
+class MeOut(BaseModel):
+    username: str
+    api_key: str
+    install_linux: str
+    install_windows: str
+
+
+# --- Scanning -----------------------------------------------------------
 class FindingSchema(BaseModel):
     control_id: str
     title: str
@@ -26,18 +41,13 @@ class FindingSchema(BaseModel):
 class ScanRequest(BaseModel):
     hostname: str
     ip_address: str
+    os_type: Optional[str] = "linux"
     score: float
     findings: List[FindingSchema]
 
 
-class FindingOut(BaseModel):
-    control_id: str
-    title: str
-    severity: str
-    passed: bool
-    detail: str
-
-    model_config = {"from_attributes": True}
+class FindingOut(FindingSchema):
+    pass
 
 
 class ScanOut(BaseModel):
@@ -53,7 +63,10 @@ class ServerOut(BaseModel):
     id: int
     hostname: str
     ip_address: str
+    os_type: str
     created_at: datetime
+    latest_score: Optional[float] = None
+    latest_scanned_at: Optional[datetime] = None
 
     model_config = {"from_attributes": True}
 

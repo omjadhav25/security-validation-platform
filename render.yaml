@@ -14,11 +14,9 @@ services:
       - key: SECRET_KEY
         generateValue: true
       - key: FRONTEND_URL
-        value: https://security-validation-platform.vercel.app/
-      - key: ADMIN_USERNAME
-        sync: false
-      - key: ADMIN_PASSWORD
-        sync: false
+        value: https://security-validation-platform.vercel.app
+      - key: BACKEND_URL
+        value: https://security-validation-platform.onrender.com
 
 databases:
   - name: security-validation-db
