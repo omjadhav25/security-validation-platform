@@ -1,0 +1,14 @@
+[Unit]
+Description=Security Validation Platform backend
+After=network.target
+
+[Service]
+User=ubuntu
+WorkingDirectory=/home/ubuntu/security-validation-platform/backend
+EnvironmentFile=/home/ubuntu/security-validation-platform/backend/.env
+ExecStart=/home/ubuntu/security-validation-platform/backend/venv/bin/uvicorn main:app --host 127.0.0.1 --port 8000
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
