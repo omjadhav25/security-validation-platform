@@ -16,7 +16,7 @@ services:
       - key: FRONTEND_URL
         value: https://security-validation-platform.vercel.app
       - key: BACKEND_URL
-        value: https://security-validation-platform.onrender.com
+        value: https://security-validation-platform-vgfi.onrender.com
 
 databases:
   - name: security-validation-db
