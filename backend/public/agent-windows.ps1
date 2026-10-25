@@ -7,7 +7,7 @@
 
 $ErrorActionPreference = "Stop"
 
-$BackendUrl = if ($env:BACKEND_URL) { $env:BACKEND_URL } else { "https://security-validation-platform.onrender.com" }
+$BackendUrl = if ($env:BACKEND_URL) { $env:BACKEND_URL } else { "https://security-validation-platform-vgfi.onrender.com" }
 $ApiKey = $env:SVP_API_KEY
 
 if (-not $ApiKey) {

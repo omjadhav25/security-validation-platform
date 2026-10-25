@@ -8,7 +8,7 @@
 
 set -euo pipefail
 
-BACKEND_URL="${BACKEND_URL:-https://security-validation-platform.onrender.com}"
+BACKEND_URL="${BACKEND_URL:-https://security-validation-platform-vgfi.onrender.com}"
 API_KEY="${1:-${SVP_API_KEY:-}}"
 
 if [ -z "$API_KEY" ]; then
